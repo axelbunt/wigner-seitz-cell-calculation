@@ -25,13 +25,6 @@ struct std::hash<Point>
     }
 };
 
-//bool operator<(const Point& p1, const Point& p2) {
-//    if (p1.x < p2.x ) {
-//        return true;
-//    }
-//    return false;
-//}
-
 class Atom {
 public:
     float x_abs;
@@ -45,18 +38,21 @@ public:
     float k;
     float b;
     bool is_parallel_y;
-    float x;  // если уравнение вида х=...
+    float x;  // for equation x=...
 };
 
-bool operator==(const Atom& left, const Atom& right) {  // перезагрузка оператора для сравнения атомов
+// reloading the operator to compare atoms
+bool operator==(const Atom& left, const Atom& right) {
     return left.x_abs == right.x_abs && left.y_abs == right.y_abs;
 }
 
-ostream& operator << (ostream& os, const Point& point) {  // перезагрузка оператора для вывода координат точки в консоль
+// reloading the operator to output the coordinates of a point in the console
+ostream& operator << (ostream& os, const Point& point) {
     return os << "x: " << point.x << ", y: " << point.y;
 }
 
-bool is_atom_in_vector(const Atom& atom, const vector<Atom>& arr) {  // проверка нахождения атома в массиве
+// check if atom contains in vector
+bool is_atom_in_vector(const Atom& atom, const vector<Atom>& arr) {
     if (arr.empty()) {
         return false;
     }
@@ -66,10 +62,11 @@ bool is_atom_in_vector(const Atom& atom, const vector<Atom>& arr) {  // пров
     return false;
 }
 
-Line get_line_equation(float x_1, float y_1, float x_2, float y_2) {  // ф-ция для получения ур-ния прямой
+// function for getting equation of line
+Line get_line_equation(float x_1, float y_1, float x_2, float y_2) {
     Line ans{};
 
-    if (abs(x_1 - x_2) <= 1e-9) {  // если уравнение вида х=...
+    if (abs(x_1 - x_2) <= 1e-9) {  // for equation x=...
         ans.is_parallel_y = true;
         ans.x = x_1;
     } else {
@@ -86,27 +83,29 @@ Line get_line_equation(float x_1, float y_1, float x_2, float y_2) {  // ф-ци
     return ans;
 }
 
-float compute_polar_angle(const Atom& atom) {  // вычилсение полярного угла атома
+// function for computing polar angle of atom relative to the origin of coordinates
+float compute_polar_angle(const Atom& atom) {
     return atan2(atom.y_abs, atom.x_abs);
 }
 
-float get_polygon_square(const vector<Point>& points) {  // вычисление площади многоугольника по координатам вершин
-    float square = 0;
+// function for computing area of polygon based on the coordinates of its vertices
+float get_polygon_area(const vector<Point>& points) {
+    float area = 0;
     float x1 = points[0].x;
     float y1 = points[0].y;
     float x2, y2;
     for (int i = 1; i < points.size(); ++i) {
         x2 = points[i].x;
         y2 = points[i].y;
-        square += (x1 + x2) * (y2 - y1);
+        area += (x1 + x2) * (y2 - y1);
         x1 = x2;
         y1 = y2;
     }
-    square += (points[0].x + x2) * (points[0].y - y2);
-    return abs(square) / 2;
+    area += (points[0].x + x2) * (points[0].y - y2);
+    return abs(area) / 2;
 }
 
-Point get_line_interception(Line& line_1, Line& line_2) {
+Point get_lines_interception(Line& line_1, Line& line_2) {
     float x, y;
     if (line_1.is_parallel_y || line_2.is_parallel_y) {
         if (line_1.is_parallel_y) {
@@ -124,7 +123,7 @@ Point get_line_interception(Line& line_1, Line& line_2) {
 }
 
 int main() {
-    int n;  // вводим количество атомов в ячейке
+    int n;  // number of atoms in cell
     cin >> n;
 
     if (n == 1) {
@@ -133,23 +132,27 @@ int main() {
     }
 
     vector<Atom> atoms(n);
-    for (int i = 0; i < n; ++i) {  // вводим абсолютные координаты атома
+    for (int i = 0; i < n; ++i) {  // getting absolute coordinates of the atom
         float x_abs, y_abs;
         cin >> x_abs >> y_abs;
         atoms[i].x_abs = x_abs;
         atoms[i].y_abs = y_abs;
 
-        if (i == 0) {  // считаем первый введенный атом "начальным", то есть его относительные координаты – нули
+        // we consider the first entered atom to be "initial", that is, its relative coordinates are zeros
+        if (i == 0) {
             atoms[i].x_rel = 0;
             atoms[i].y_rel = 0;
-        } else {  // считаем относительные координаты атома, если он не начальный
+        } else {  // calculating the relative coordinates of the atom, if it is not the initial one
             atoms[i].x_rel = x_abs - atoms[0].x_abs;
             atoms[i].y_rel = y_abs - atoms[0].y_abs;
         }
     }
 
-    vector<Atom> neighbor_atoms;  // отражаем положения атомов относительно "начального", для получения всех его соседних атомов
-    neighbor_atoms.insert(neighbor_atoms.end(), atoms.begin() + 1, atoms.end());    // добавление "родителей" симметричных атомов в общий вектор соседей
+    // we reflect the positions of the atoms relative to the "initial" one, in order to obtain all
+    // its neighboring atoms
+    vector<Atom> neighbor_atoms;
+    // adding the "parents" of symmetric atoms to the vector of neighbors
+    neighbor_atoms.insert(neighbor_atoms.end(), atoms.begin() + 1, atoms.end());
     for (int i = 1; i < n; ++i) {
         Atom new_atom{};
         new_atom.x_abs = atoms[0].x_abs + (atoms[0].x_abs - atoms[i].x_abs);
@@ -160,7 +163,9 @@ int main() {
             neighbor_atoms.push_back(new_atom);
         }
     }
-    if (n == 4) {  // случай исключение, когда не достраиваются диагональные атомы
+
+    // this case is an exception when diagonal atoms are not added to vector of neighbors
+    if (n == 4) {
         Atom first_atom = atoms[1];
         Atom second_atom = atoms[3];
 
@@ -177,30 +182,25 @@ int main() {
         new_atom_2.y_abs = atoms[0].y_abs - d_y_1;
         neighbor_atoms.push_back(new_atom_1);
         neighbor_atoms.push_back(new_atom_2);
-//        cout << new_atom_1.x_abs << ' ' << new_atom_1.y_abs << '\n';
-//        cout << new_atom_2.x_abs << ' ' << new_atom_2.y_abs << '\n';
     }
 
-    // сортирвока соседей по полярному углу
+    // sorting neighbors by polar angle
     sort(neighbor_atoms.begin(), neighbor_atoms.end(), [](const Atom& first, const Atom& second) {
         return compute_polar_angle(first) < compute_polar_angle(second);
     });
 
-//    for (int i = 0; i < neighbor_atoms.size(); ++i) {
-//        cout << "Atom " + to_string(i) + ": " + to_string(neighbor_atoms[i].x_abs) + " " + to_string(neighbor_atoms[i].y_abs) + '\n';
-//    }
-
-    vector<Line> median_perp_equations;  // вектор для всех уравнений прямых серединных перпендикуляров
+    // vector for all equations of straight median perpendiculars
+    vector<Line> median_perp_equations;
     float x_1 = atoms[0].x_abs;
     float y_1 = atoms[0].y_abs;
     for (Atom atom : neighbor_atoms) {
         float x_2 = atom.x_abs;
         float y_2 = atom.y_abs;
 
-        float x_m = (x_1 + x_2) / 2;  // вычисляем координаты середины отрезка
+        float x_m = (x_1 + x_2) / 2;  // calculate the coordinates of the middle of the segment
         float y_m = (y_1 + y_2) / 2;
 
-        if (abs(y_1 - y_2) <= 1e-9) {  // случай, если сер пер будет параллелен 0Y
+        if (abs(y_1 - y_2) <= 1e-9) {  // the case if the median perpendicular is parallel to 0Y
             Line perp_equation{0, 0, true, x_m};
             median_perp_equations.push_back(perp_equation);
         } else {
@@ -213,15 +213,8 @@ int main() {
         }
     }
 
-//    for (Line line : median_perp_equations) {
-//        if (line.is_parallel_y) {
-//            cout << "x = " << line.x << '\n';
-//        } else {
-//            cout << "k = " << line.k << ", b = " << line.b << '\n';
-//        }
-//    }
-
-    vector<Point> cell_points{};  // вычисляем крайние точки ячейки Вигнера-Зейтца
+    // calculate the extreme points of the Wigner-Seitz cell
+    vector<Point> cell_points{};
     if (n == 5) {
         for (int i = 0; i < median_perp_equations.size(); ++i) {
             Line current_line = median_perp_equations[i];
@@ -232,10 +225,11 @@ int main() {
                 next_line = median_perp_equations[i + 1];
             }
 
-            cell_points.push_back(get_line_interception(current_line, next_line));
+            cell_points.push_back(get_lines_interception(current_line, next_line));
         }
     } else {
-        vector<tuple<Point, Line, Line>> first_border_points{};  // получение границ при пересечении серперов не к диагоналям
+        // getting boundaries at the intersection of mid-perpendiculars not to diagonals
+        vector<tuple<Point, Line, Line>> first_border_points{};
         for (int i = 1; i < median_perp_equations.size(); i += 2) {
             Line current_line = median_perp_equations[i];
             Line next_line{};
@@ -245,19 +239,21 @@ int main() {
                 next_line = median_perp_equations[i + 2];
             }
 
-            first_border_points.emplace_back(get_line_interception(current_line, next_line), current_line, next_line);
+            first_border_points.emplace_back(get_lines_interception(current_line, next_line),
+                                             current_line, next_line);
         }
 
         int first_border_counter = 0;
         vector<tuple<Point, Point>> cutting_points;
         unordered_map<Point, vector<Point>> point_replacement{};
         int special_key = 0;
-        for (int i = 2; i < median_perp_equations.size(); i += 2) {  // обход серперов построенных от диагонали
+        // bypassing mid-perpendiculars built from the diagonal
+        for (int i = 2; i < median_perp_equations.size(); i += 2) {
             tuple<Point, Line, Line> top = first_border_points[first_border_counter];
 
             Line diagonal_line = median_perp_equations[i];
-            Point point_1 = get_line_interception(diagonal_line, get<1>(top));
-            Point point_2 = get_line_interception(diagonal_line, get<2>(top));
+            Point point_1 = get_lines_interception(diagonal_line, get<1>(top));
+            Point point_2 = get_lines_interception(diagonal_line, get<2>(top));
             cutting_points.emplace_back(point_1, point_2);
 
             Point key = get<0>(top);
@@ -270,17 +266,10 @@ int main() {
             special_key += 1;
         }
 
-//        for (auto smth : point_replacement) {
-//            cout << smth.first << "! " << smth.second[0] << "! " << smth.second[1] << '\n';
-//        }
-//        for (auto smth : first_border_points) {
-//            cout << get<0>(smth) << '\n';
-//        }
         for (auto point : first_border_points) {
             Point to_check = get<0>(point);
 
             if (point_replacement.find(to_check) != point_replacement.end()) {
-//                cout << to_check << '\n';
                 Point to_push_back_1 = point_replacement[to_check][0];
                 Point to_push_back_2 = point_replacement[to_check][1];
                 if (to_push_back_1 == to_push_back_2) {
@@ -299,7 +288,7 @@ int main() {
         cout << point << '\n';
     }
 
-    cout << get_polygon_square(cell_points);
+    cout << get_polygon_area(cell_points);
 
     return 0;
 }
