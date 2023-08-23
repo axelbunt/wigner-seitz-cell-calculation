@@ -1,5 +1,7 @@
 # Wigner-Seitz cell calculation
 
+This program is designed to compute Wigner-Seitz cell for given atoms.
+
 ## Formal task
 The number of atoms of the cell and their coordinates in space are entered. Output the coordinates of the Wigner-Seitz cell and its area.
 
